@@ -36,8 +36,8 @@ public class ActividadContextService {
             puntoActividad = geocodingService.buscar(actividad.getUbicacion() + ", Madrid, España");
         }
 
-        WeatherInfo weather = aemetService.getWeatherMadrid();
-        TrafficInfo traffic = trafficService.calcularNivelSimple(punto);
+        WeatherInfo weather = aemetService.getWeatherMadrid(actividad.getFecha());
+        TrafficInfo traffic = trafficService.calcularNivelSimple(puntoActividad);
 
         return new ActividadContexto(puntoActividad, weather, traffic);
     }
