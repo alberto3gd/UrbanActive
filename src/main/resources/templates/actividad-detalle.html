@@ -42,7 +42,9 @@
             <span class="badge bg-success ms-2">Pública</span>
           </div>
 
-          <h1 class="activity-title mb-2" th:text="${actividad.titulo} + ' - ' + ${actividad.descripcion}">Nombre actividad</h1>
+          <h1 class="activity-title mb-2" th:text="${actividad.titulo} + ' - ' + ${actividad.descripcion}">
+            Nombre actividad
+          </h1>
 
           <p class="activity-subtitle mb-4" th:text="${actividad.organizador}">
             Organizador
@@ -91,37 +93,44 @@
 
       <!-- COLUMNA DERECHA -->
       <aside>
+
         <div class="metrics-row">
           <div class="card-metric weather-card">
             <div class="fw-semibold mb-2">Clima</div>
+
             <div th:if="${contexto != null && contexto.weather != null}">
               <div class="weather-info">
                 <div class="weather-main" th:text="${contexto.weather.estadoCielo}">Soleado</div>
                 <div class="weather-temp" th:text="${contexto.weather.temperatura}">24ºC</div>
                 <div class="weather-details">
                   <small th:text="${contexto.weather.viento}">10 km/h</small>
-                  <small th:if="${contexto.weather.probabilidadLluvia != null}" th:text="' · ' + ${contexto.weather.probabilidadLluvia}"> · 0%</small>
+                  <small th:if="${contexto.weather.probabilidadLluvia != null}"
+                         th:text="' · ' + ${contexto.weather.probabilidadLluvia}">
+                    · 0%
+                  </small>
                 </div>
               </div>
             </div>
+
             <div th:if="${contexto == null || contexto.weather == null}" class="text-muted small">
               No hay datos meteorológicos disponibles
             </div>
           </div>
+
           <div class="card-metric traffic-card">
             <div class="fw-semibold mb-2">Tráfico</div>
 
             <div th:if="${contexto != null && contexto.traffic != null}">
               <div class="traffic-info">
                 <div class="traffic-level"
-                    th:classappend="${contexto.traffic.nivel == 'Bajo' ? 'traffic-low' :
+                     th:classappend="${contexto.traffic.nivel == 'Bajo' ? 'traffic-low' :
                                     contexto.traffic.nivel == 'Medio' ? 'traffic-medium' : 'traffic-high'}"
-                    th:text="${contexto.traffic.nivel}">
+                     th:text="${contexto.traffic.nivel}">
                   Medio
                 </div>
 
                 <div class="traffic-summary small"
-                    th:text="${contexto.traffic.resumen}">
+                     th:text="${contexto.traffic.resumen}">
                   Trayecto aprox. 4.2 km, 2 incidencias cercanas
                 </div>
               </div>
@@ -131,6 +140,7 @@
               No se pudo cargar información del tráfico
             </div>
           </div>
+        </div>
 
         <div class="sidebar-card">
           <div class="fw-semibold mb-2">Descripción</div>
@@ -153,34 +163,32 @@
         <form th:action="@{/reservas/actividad/{id}(id=${actividad.id})}" method="get">
           <button type="submit" class="reserve-btn">Reservar plaza</button>
         </form>
+
       </aside>
 
     </div>
   </div>
 
-
   <script>
-  document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
       const url = new URL(window.location.href);
 
       if (!url.searchParams.has("userLat") || !url.searchParams.has("userLon")) {
-          if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(
-                  function(position) {
-                      url.searchParams.set("userLat", position.coords.latitude);
-                      url.searchParams.set("userLon", position.coords.longitude);
-                      window.location.replace(url.toString());
-                  },
-                  function() {
-                      console.log("No se pudo obtener la ubicación del usuario");
-                  }
-              );
-          }
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function(position) {
+              url.searchParams.set("userLat", position.coords.latitude);
+              url.searchParams.set("userLon", position.coords.longitude);
+              window.location.replace(url.toString());
+            },
+            function() {
+              console.log("No se pudo obtener la ubicación del usuario");
+            }
+          );
+        }
       }
-  });
+    });
   </script>
-
-
 
 </body>
 </html>
