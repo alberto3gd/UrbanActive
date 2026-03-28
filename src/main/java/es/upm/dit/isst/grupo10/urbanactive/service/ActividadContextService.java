@@ -23,22 +23,28 @@ public class ActividadContextService {
         this.trafficService = trafficService;
     }
 
-    public ActividadContexto getContexto(Actividad actividad) {
-        GeoPoint punto = null;
+    public ActividadContexto getContexto(Actividad actividad, GeoPoint userPoint) {
+        GeoPoint puntoActividad = null;
 
         if (actividad.getLatitud() != null && actividad.getLongitud() != null) {
-            punto = new GeoPoint(
+            puntoActividad = new GeoPoint(
                     actividad.getLatitud(),
                     actividad.getLongitud(),
                     actividad.getUbicacion()
             );
         } else {
-            punto = geocodingService.buscar(actividad.getUbicacion() + ", Madrid, España");
+            puntoActividad = geocodingService.buscar(actividad.getUbicacion() + ", Madrid, España");
         }
 
         WeatherInfo weather = aemetService.getWeatherMadrid();
-        TrafficInfo traffic = trafficService.calcularNivelSimple(punto);
 
-        return new ActividadContexto(punto, weather, traffic);
+        TrafficInfo traffic;
+        if (userPoint != null && puntoActividad != null) {
+            traffic = trafficService.calcularTraficoTrayecto(userPoint, puntoActividad);
+        } else {
+            traffic = trafficService.calcularNivelSimple(puntoActividad);
+        }
+
+        return new ActividadContexto(puntoActividad, weather, traffic);
     }
 }

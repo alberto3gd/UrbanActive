@@ -110,20 +110,27 @@
           </div>
           <div class="card-metric traffic-card">
             <div class="fw-semibold mb-2">Tráfico</div>
+
             <div th:if="${contexto != null && contexto.traffic != null}">
               <div class="traffic-info">
                 <div class="traffic-level"
-                     th:classappend="${contexto.traffic.nivel == 'Bajo' ? 'traffic-low' :
+                    th:classappend="${contexto.traffic.nivel == 'Bajo' ? 'traffic-low' :
                                     contexto.traffic.nivel == 'Medio' ? 'traffic-medium' : 'traffic-high'}"
-                     th:text="${contexto.traffic.nivel}">Medio</div>
-                <div class="traffic-summary small" th:text="${contexto.traffic.resumen}">1 incidencia cercana</div>
+                    th:text="${contexto.traffic.nivel}">
+                  Medio
+                </div>
+
+                <div class="traffic-summary small"
+                    th:text="${contexto.traffic.resumen}">
+                  Trayecto aprox. 4.2 km, 2 incidencias cercanas
+                </div>
               </div>
             </div>
+
             <div th:if="${contexto == null || contexto.traffic == null}" class="text-muted small">
               No se pudo cargar información del tráfico
             </div>
           </div>
-        </div>
 
         <div class="sidebar-card">
           <div class="fw-semibold mb-2">Descripción</div>
@@ -150,6 +157,30 @@
 
     </div>
   </div>
+
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+      const url = new URL(window.location.href);
+
+      if (!url.searchParams.has("userLat") || !url.searchParams.has("userLon")) {
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                  function(position) {
+                      url.searchParams.set("userLat", position.coords.latitude);
+                      url.searchParams.set("userLon", position.coords.longitude);
+                      window.location.replace(url.toString());
+                  },
+                  function() {
+                      console.log("No se pudo obtener la ubicación del usuario");
+                  }
+              );
+          }
+      }
+  });
+  </script>
+
+
 
 </body>
 </html>

@@ -4,12 +4,15 @@ import es.upm.dit.isst.grupo10.urbanactive.model.Actividad;
 import es.upm.dit.isst.grupo10.urbanactive.service.ActividadService;
 import es.upm.dit.isst.grupo10.urbanactive.service.ActividadContextService;
 import es.upm.dit.isst.grupo10.urbanactive.dto.ActividadContexto;
+import es.upm.dit.isst.grupo10.urbanactive.dto.GeoPoint;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
 
 @Controller
 public class ActividadController {
@@ -29,16 +32,25 @@ public class ActividadController {
     }
 
     @GetMapping("/actividades/{id}")
-    public String verDetalle(@PathVariable Long id, Model model) {
+    public String verDetalle(@PathVariable Long id,
+                            @RequestParam(required = false) Double userLat,
+                            @RequestParam(required = false) Double userLon,
+                            Model model) {
         Actividad actividad = actividadService.getActividadById(id);
         if (actividad == null) {
             return "redirect:/actividades";
         }
 
-        ActividadContexto contexto = actividadContextService.getContexto(actividad);
+        GeoPoint userPoint = null;
+        if (userLat != null && userLon != null) {
+            userPoint = new GeoPoint(userLat, userLon, "Tu ubicación");
+        }
+
+        ActividadContexto contexto = actividadContextService.getContexto(actividad, userPoint);
 
         model.addAttribute("actividad", actividad);
         model.addAttribute("contexto", contexto);
+        model.addAttribute("userPoint", userPoint);
         return "actividad-detalle";
     }
 
