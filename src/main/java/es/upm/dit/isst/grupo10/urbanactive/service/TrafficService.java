@@ -18,13 +18,11 @@ public class TrafficService {
     }
 
     public TrafficInfo calcularNivelSimple(GeoPoint punto) {
-
         if (punto == null) {
-            return new TrafficInfo("No disponible", 0, "Sin ubicación");
+            return new TrafficInfo("No disponible", 0, "Sin ubicación", 0.0);
         }
 
         try {
-            // Dataset público de incidencias Madrid (JSON)
             String url = "https://datos.madrid.es/egob/catalogo/202716-0-incidencias-trafico.json";
 
             String json = restClient.get()
@@ -33,13 +31,11 @@ public class TrafficService {
                     .body(String.class);
 
             JsonNode root = objectMapper.readTree(json);
-
             JsonNode incidencias = root.path("@graph");
 
             int cercanas = 0;
 
             for (JsonNode inc : incidencias) {
-
                 double lat = inc.path("location").path("latitude").asDouble();
                 double lon = inc.path("location").path("longitude").asDouble();
 
@@ -48,7 +44,6 @@ public class TrafficService {
                         lat, lon
                 );
 
-                // radio de 2 km
                 if (distancia < 2) {
                     cercanas++;
                 }
@@ -62,32 +57,18 @@ public class TrafficService {
             return new TrafficInfo(
                     nivel,
                     cercanas,
-                    cercanas + " incidencias cercanas"
+                    cercanas + " incidencias cercanas",
+                    0.0
             );
 
         } catch (Exception e) {
-            return new TrafficInfo("No disponible", 0, "Error obteniendo tráfico");
+            return new TrafficInfo("No disponible", 0, "Error obteniendo tráfico", 0.0);
         }
-    }
-
-    private double distanciaKm(double lat1, double lon1, double lat2, double lon2) {
-        double R = 6371;
-
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-
-        double a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) *
-                Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-        return 2 * R * Math.asin(Math.sqrt(a));
     }
 
     public TrafficInfo calcularTraficoTrayecto(GeoPoint origen, GeoPoint destino) {
         if (origen == null || destino == null) {
-            return new TrafficInfo("No disponible", 0, "Faltan ubicaciones");
+            return new TrafficInfo("No disponible", 0, "Faltan ubicaciones", 0.0);
         }
 
         try {
@@ -120,22 +101,36 @@ public class TrafficService {
             else nivel = "Alto";
 
             String resumen = String.format(
-                    "Trayecto aprox. %.1f km, %d incidencias cercanas",
+                    "Distancia aproximada: %.1f km · %d incidencias en el trayecto",
                     distancia,
                     incidenciasTrayecto
             );
 
-            return new TrafficInfo(nivel, incidenciasTrayecto, resumen);
+            return new TrafficInfo(nivel, incidenciasTrayecto, resumen, distancia);
 
         } catch (Exception e) {
-            return new TrafficInfo("No disponible", 0, "Error obteniendo tráfico");
+            return new TrafficInfo("No disponible", 0, "Error obteniendo tráfico", 0.0);
         }
     }
 
+    private double distanciaKm(double lat1, double lon1, double lat2, double lon2) {
+        double R = 6371;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) *
+                Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        return 2 * R * Math.asin(Math.sqrt(a));
+    }
 
     private boolean estaCercaDelTrayecto(GeoPoint origen, GeoPoint destino,
-                                        double latInc, double lonInc,
-                                        double umbralKm) {
+                                         double latInc, double lonInc,
+                                         double umbralKm) {
         double d1 = distanciaKm(origen.lat(), origen.lon(), latInc, lonInc);
         double d2 = distanciaKm(destino.lat(), destino.lon(), latInc, lonInc);
         double trayecto = distanciaKm(origen.lat(), origen.lon(), destino.lat(), destino.lon());

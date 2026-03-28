@@ -16,7 +16,7 @@ public class GeocodingService {
     public GeocodingService(RestClient.Builder builder) {
         this.restClient = builder
                 .baseUrl("https://nominatim.openstreetmap.org")
-                .defaultHeader("User-Agent", "UrbanActive/1.0 (contacto@ejemplo.com)")
+                .defaultHeader("User-Agent", "UrbanActive/1.0 (urbanactive@upm.es)")
                 .build();
     }
 
@@ -28,6 +28,7 @@ public class GeocodingService {
                             .queryParam("q", texto)
                             .queryParam("format", "jsonv2")
                             .queryParam("limit", 1)
+                            .queryParam("accept-language", "es")
                             .build())
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {});
@@ -37,6 +38,7 @@ public class GeocodingService {
             }
 
             Map<String, Object> item = respuesta.get(0);
+
             return new GeoPoint(
                     Double.parseDouble(item.get("lat").toString()),
                     Double.parseDouble(item.get("lon").toString()),

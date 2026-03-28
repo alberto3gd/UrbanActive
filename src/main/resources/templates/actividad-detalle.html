@@ -27,7 +27,6 @@
   <div class="page-container px-3">
     <div class="activity-layout">
 
-      <!-- COLUMNA IZQUIERDA -->
       <section class="hero-card">
         <div class="hero-image-wrapper">
           <img th:src="${actividad.imagen}" src="/img/default.jpg" alt="Imagen de la actividad">
@@ -42,13 +41,17 @@
             <span class="badge bg-success ms-2">Pública</span>
           </div>
 
-          <h1 class="activity-title mb-2" th:text="${actividad.titulo} + ' - ' + ${actividad.descripcion}">
+          <h1 class="activity-title mb-2" th:text="${actividad.tipo}">
             Nombre actividad
           </h1>
 
           <p class="activity-subtitle mb-4" th:text="${actividad.organizador}">
             Organizador
           </p>
+
+          <div th:if="${mensaje != null}" class="alert alert-info mb-4" th:text="${mensaje}">
+            Mensaje
+          </div>
 
           <div class="info-grid mb-4">
             <div class="info-mini">
@@ -79,7 +82,7 @@
               <i class="fa-regular fa-star"></i>
               <div>
                 <div class="fw-semibold">Nivel</div>
-                <div th:text="${actividad.nivel}">PRINCIPIANTE</div>
+                <div th:text="${actividad.nivel.valor} + ' / 10'">8.0 / 10</div>
               </div>
             </div>
           </div>
@@ -91,28 +94,27 @@
         </div>
       </section>
 
-      <!-- COLUMNA DERECHA -->
       <aside>
 
         <div class="metrics-row">
           <div class="card-metric weather-card">
             <div class="fw-semibold mb-2">Clima</div>
 
-            <div th:if="${contexto != null && contexto.weather != null}">
+            <div th:if="${contexto != null and contexto.weather() != null}">
               <div class="weather-info">
-                <div class="weather-main" th:text="${contexto.weather.estadoCielo}">Soleado</div>
-                <div class="weather-temp" th:text="${contexto.weather.temperatura}">24ºC</div>
+                <div class="weather-main" th:text="${contexto.weather().estadoCielo()}">Soleado</div>
+                <div class="weather-temp" th:text="${contexto.weather().temperatura()}">24ºC</div>
                 <div class="weather-details">
-                  <small th:text="${contexto.weather.viento}">10 km/h</small>
-                  <small th:if="${contexto.weather.probabilidadLluvia != null}"
-                         th:text="' · ' + ${contexto.weather.probabilidadLluvia}">
+                  <small th:text="${contexto.weather().viento()}">10 km/h</small>
+                  <small th:if="${contexto.weather().probabilidadLluvia() != null}"
+                         th:text="' · ' + ${contexto.weather().probabilidadLluvia()}">
                     · 0%
                   </small>
                 </div>
               </div>
             </div>
 
-            <div th:if="${contexto == null || contexto.weather == null}" class="text-muted small">
+            <div th:if="${contexto == null or contexto.weather() == null}" class="text-muted small">
               No hay datos meteorológicos disponibles
             </div>
           </div>
@@ -120,23 +122,28 @@
           <div class="card-metric traffic-card">
             <div class="fw-semibold mb-2">Tráfico</div>
 
-            <div th:if="${contexto != null && contexto.traffic != null}">
+            <div th:if="${contexto != null and contexto.traffic() != null}">
               <div class="traffic-info">
                 <div class="traffic-level"
-                     th:classappend="${contexto.traffic.nivel == 'Bajo' ? 'traffic-low' :
-                                    contexto.traffic.nivel == 'Medio' ? 'traffic-medium' : 'traffic-high'}"
-                     th:text="${contexto.traffic.nivel}">
+                     th:classappend="${contexto.traffic().nivel() == 'Bajo' ? 'traffic-low' :
+                                    (contexto.traffic().nivel() == 'Medio' ? 'traffic-medium' : 'traffic-high')}"
+                     th:text="${contexto.traffic().nivel()}">
                   Medio
                 </div>
 
-                <div class="traffic-summary small"
-                     th:text="${contexto.traffic.resumen}">
-                  Trayecto aprox. 4.2 km, 2 incidencias cercanas
+                <div class="traffic-summary small mb-1"
+                     th:text="${contexto.traffic().resumen()}">
+                  Distancia aproximada: 4.2 km · 2 incidencias en el trayecto
+                </div>
+
+                <div class="small text-muted"
+                     th:text="${#numbers.formatDecimal(contexto.traffic().distanciaKm(), 1, 1)} + ' km'">
+                  4.2 km
                 </div>
               </div>
             </div>
 
-            <div th:if="${contexto == null || contexto.traffic == null}" class="text-muted small">
+            <div th:if="${contexto == null or contexto.traffic() == null}" class="text-muted small">
               No se pudo cargar información del tráfico
             </div>
           </div>
@@ -156,11 +163,13 @@
           </div>
           <div class="text-end">
             <div class="fw-semibold">Precio</div>
-            <div th:text="${actividad.precio} + ' €'">10 €</div>
+            <div th:text="${actividad.precio == 0.0 ? 'Gratis' : actividad.precio + ' €'}">10 €</div>
           </div>
         </div>
 
-        <form th:action="@{/reservas/actividad/{id}(id=${actividad.id})}" method="get">
+        <form th:action="@{/actividades/{id}/reservar(id=${actividad.id})}" method="post">
+          <input type="hidden" name="userLat" th:value="${userPoint != null ? userPoint.lat() : ''}">
+          <input type="hidden" name="userLon" th:value="${userPoint != null ? userPoint.lon() : ''}">
           <button type="submit" class="reserve-btn">Reservar plaza</button>
         </form>
 
