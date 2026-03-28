@@ -93,16 +93,36 @@
       <aside>
         <div class="metrics-row">
           <div class="card-metric weather-card">
-            <div>Clima</div>
+            <div class="fw-semibold mb-2">Clima</div>
+            <div th:if="${contexto != null && contexto.weather != null}">
+              <div class="weather-info">
+                <div class="weather-main" th:text="${contexto.weather.estadoCielo}">Soleado</div>
+                <div class="weather-temp" th:text="${contexto.weather.temperatura}">24ºC</div>
+                <div class="weather-details">
+                  <small th:text="${contexto.weather.viento}">10 km/h</small>
+                  <small th:if="${contexto.weather.probabilidadLluvia != null}" th:text="' · ' + ${contexto.weather.probabilidadLluvia}"> · 0%</small>
+                </div>
+              </div>
+            </div>
+            <div th:if="${contexto == null || contexto.weather == null}" class="text-muted small">
+              No hay datos meteorológicos disponibles
+            </div>
           </div>
           <div class="card-metric traffic-card">
-            <div>Tráfico</div>
+            <div class="fw-semibold mb-2">Tráfico</div>
+            <div th:if="${contexto != null && contexto.traffic != null}">
+              <div class="traffic-info">
+                <div class="traffic-level"
+                     th:classappend="${contexto.traffic.nivel == 'Bajo' ? 'traffic-low' :
+                                    contexto.traffic.nivel == 'Medio' ? 'traffic-medium' : 'traffic-high'}"
+                     th:text="${contexto.traffic.nivel}">Medio</div>
+                <div class="traffic-summary small" th:text="${contexto.traffic.resumen}">1 incidencia cercana</div>
+              </div>
+            </div>
+            <div th:if="${contexto == null || contexto.traffic == null}" class="text-muted small">
+              No se pudo cargar información del tráfico
+            </div>
           </div>
-        </div>
-
-        <div class="sidebar-card">
-          <div class="fw-semibold mb-1">Monitor</div>
-          <div th:text="${actividad.organizador}">UrbanActive</div>
         </div>
 
         <div class="sidebar-card">

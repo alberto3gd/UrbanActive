@@ -13,10 +13,60 @@ public class ActividadService {
     private final List<Actividad> actividades = new ArrayList<>();
 
     public ActividadService() {
-        actividades.add(new Actividad(1L, "Running", "Running por El Retiro", "Salida de running por El Retiro", new Nivel(10.00), "Juan Perez", "26/04/2026", "14:00", "Parque el Retiro", 12.0,  10, "30 minutos", "/img/running.jpg"));
-        actividades.add(new Actividad(2L, "Yoga", "Yoga al Aire Libre", "Sesión de yoga al aire libre", new Nivel (8.00), "Lucía Lopez", "30/04/2026", "18:00", "Parque del Oeste", 9.5,  5, "1 hora", "/img/yoga.jpg"));
-        actividades.add(new Actividad(3L, "Ciclismo", "Ruta Urbana en Bicicleta", "Ruta urbana en bicicleta", new Nivel (5.00), "Juan Moreno", "6/05/2026", "19:00", "El Pardo", 0,  14, "1 hora y 30 minutos", "/img/ciclismo.jpg"));
-    }
+    actividades.add(new Actividad(
+            1L,
+            "Running",
+            "Running por El Retiro",
+            "Salida de running por El Retiro",
+            new Nivel(10.00),
+            "Juan Perez",
+            "29/03/2026",
+            "14:00",
+            "Parque el Retiro",
+            40.4153,
+            -3.6844,
+            12.0,
+            10,
+            "30 minutos",
+            "/img/running.jpg"
+    ));
+
+    actividades.add(new Actividad(
+            2L,
+            "Yoga",
+            "Yoga al Aire Libre",
+            "Sesión de yoga al aire libre",
+            new Nivel(8.00),
+            "Lucía Lopez",
+            "30/04/2026",
+            "18:00",
+            "Parque del Oeste",
+            40.4264,
+            -3.7192,
+            9.5,
+            5,
+            "1 hora",
+            "/img/yoga.jpg"
+    ));
+
+    actividades.add(new Actividad(
+            3L,
+            "Ciclismo",
+            "Ruta Urbana en Bicicleta",
+            "Ruta urbana en bicicleta",
+            new Nivel(5.00),
+            "Juan Moreno",
+            "6/05/2026",
+            "19:00",
+            "El Pardo",
+            40.5186,
+            -3.7737,
+            0,
+            14,
+            "1 hora y 30 minutos",
+            "/img/ciclismo.jpg"
+    ));
+}
 
     public List<Actividad> getActividades() {
         return actividades;

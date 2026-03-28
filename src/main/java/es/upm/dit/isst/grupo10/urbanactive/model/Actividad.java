@@ -13,13 +13,15 @@ public class Actividad {
     private String fecha;
     private String hora;
     private String ubicacion;
+    private Double latitud;
+    private Double longitud;
     private double precio;
     private int plazasTotales;
     private int plazasDisponibles; 
     private String duracion;
     private String imagen;
 
-    public Actividad(Long id, String tipo, String titulo, String descripcion,Nivel nivel, String organizador, String fecha, String hora, String ubicacion, double precio, int plazasTotales, String duracion, String imagen) {
+    public Actividad(Long id, String tipo, String titulo, String descripcion,Nivel nivel, String organizador, String fecha, String hora, String ubicacion, Double latitud, Double longitud, double precio, int plazasTotales, String duracion, String imagen) {
 
         this.id = id;
         this.tipo = tipo;
@@ -30,6 +32,8 @@ public class Actividad {
         this.fecha = fecha;
         this.hora = hora;
         this.ubicacion = ubicacion;
+        this.latitud = latitud;
+        this.longitud = longitud;
         this.precio = precio;
         this.plazasTotales = plazasTotales;
         this.plazasDisponibles = plazasTotales;
@@ -49,10 +53,16 @@ public class Actividad {
     public String getFecha() { return fecha; }
     public String getHora() { return hora; }
     public String getUbicacion() { return ubicacion; }
+    public Double getLatitud() { return latitud; }
+    public Double getLongitud() { return longitud; }
     public double getPrecio() { return precio; }
     public int getPlazasTotales() { return plazasTotales; }
     public int getPlazasDisponibles() { return plazasDisponibles; }
-    public int setPlazasDisponibles(int plazasDisponibles) { return this.plazasDisponibles = plazasDisponibles;}
+    public void setPlazasDisponibles(int plazasDisponibles) { this.plazasDisponibles = plazasDisponibles;}
     public String getDuracion() { return duracion; }
     public String getImagen() { return imagen; }
+
+    public boolean isGratis() { return precio == 0; }
+    public String getPrecioTexto() { return precio == 0 ? "Gratis" : precio + "€"; }
+
 }

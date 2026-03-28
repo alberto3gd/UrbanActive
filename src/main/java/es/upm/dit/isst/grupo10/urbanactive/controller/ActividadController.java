@@ -2,6 +2,8 @@ package es.upm.dit.isst.grupo10.urbanactive.controller;
 
 import es.upm.dit.isst.grupo10.urbanactive.model.Actividad;
 import es.upm.dit.isst.grupo10.urbanactive.service.ActividadService;
+import es.upm.dit.isst.grupo10.urbanactive.service.ActividadContextService;
+import es.upm.dit.isst.grupo10.urbanactive.dto.ActividadContexto;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ActividadController {
 
     private final ActividadService actividadService;
+    private final ActividadContextService actividadContextService;
 
-    public ActividadController(ActividadService actividadService) {
+    public ActividadController(ActividadService actividadService, ActividadContextService actividadContextService) {
         this.actividadService = actividadService;
+        this.actividadContextService = actividadContextService;
     }
 
     @GetMapping("/actividades")
@@ -27,7 +31,14 @@ public class ActividadController {
     @GetMapping("/actividades/{id}")
     public String verDetalle(@PathVariable Long id, Model model) {
         Actividad actividad = actividadService.getActividadById(id);
+        if (actividad == null) {
+            return "redirect:/actividades";
+        }
+
+        ActividadContexto contexto = actividadContextService.getContexto(actividad);
+
         model.addAttribute("actividad", actividad);
+        model.addAttribute("contexto", contexto);
         return "actividad-detalle";
     }
 
