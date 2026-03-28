@@ -1,6 +1,5 @@
 package es.upm.dit.isst.grupo10.urbanactive.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.upm.dit.isst.grupo10.urbanactive.dto.WeatherInfo;
@@ -9,6 +8,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Service
@@ -46,28 +47,44 @@ public class AemetService {
                 .body(String.class);
     }
 
-    public WeatherInfo getWeatherMadrid() {
+    public WeatherInfo getWeatherMadrid(String fechaActividad) {
         try {
             String datosUrl = getDatosUrl("/opendata/api/prediccion/especifica/municipio/diaria/28079");
 
             if (datosUrl == null) {
-                return new WeatherInfo("No disponible", "-", "-", "-", null);
+                return new WeatherInfo("Datos no disponibles", "-", "-", "-", null);
             }
 
             String rawJson = getRawJsonFromDatos(datosUrl);
 
             JsonNode root = objectMapper.readTree(rawJson);
             if (!root.isArray() || root.isEmpty()) {
-                return new WeatherInfo("No disponible", "-", "-", "-", null);
+                return new WeatherInfo("Datos no disponible", "-", "-", "-", null);
             }
 
             JsonNode prediccion = root.get(0).path("prediccion");
-            JsonNode diaHoy = prediccion.path("dia").get(0);
+            JsonNode dias = prediccion.path("dia");
 
-            String estadoCielo = extraerPrimerValorNoVacio(diaHoy.path("estadoCielo"), "descripcion", "No disponible");
-            String probPrecipitacion = extraerPrimerValorNoVacio(diaHoy.path("probPrecipitacion"), "value", "-");
-            String temperaturaMax = diaHoy.path("temperatura").path("maxima").asText("-");
-            String viento = extraerViento(diaHoy.path("viento"));
+            JsonNode diaActividad = buscarDiaPorFecha(dias, fechaActividad);
+
+            if (diaActividad == null) {
+                return new WeatherInfo("Todavía no disponible", "-", "-", "-", null);
+            }
+
+            String estadoCielo = extraerPrimerValorNoVacio(
+                    diaActividad.path("estadoCielo"),
+                    "descripcion",
+                    "No disponible"
+            );
+
+            String probPrecipitacion = extraerPrimerValorNoVacio(
+                    diaActividad.path("probPrecipitacion"),
+                    "value",
+                    "-"
+            );
+
+            String temperaturaMax = diaActividad.path("temperatura").path("maxima").asText("-");
+            String viento = extraerViento(diaActividad.path("viento"));
 
             String temperaturaTexto = temperaturaMax.equals("-") ? "-" : temperaturaMax + "ºC";
 
@@ -84,19 +101,43 @@ public class AemetService {
         }
     }
 
+    private JsonNode buscarDiaPorFecha(JsonNode dias, String fechaActividad) {
+        if (dias == null || !dias.isArray() || fechaActividad == null || fechaActividad.isBlank()) {
+            return null;
+        }
+
+        try {
+            DateTimeFormatter formatterEntrada = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate fechaBuscada = LocalDate.parse(fechaActividad, formatterEntrada);
+
+            for (JsonNode dia : dias) {
+                String fechaAemet = dia.path("fecha").asText();
+
+                if (fechaAemet != null && !fechaAemet.isBlank()) {
+                    String soloFecha = fechaAemet.length() >= 10 ? fechaAemet.substring(0, 10) : fechaAemet;
+                    LocalDate fechaJson = LocalDate.parse(soloFecha);
+
+                    if (fechaJson.equals(fechaBuscada)) {
+                        return dia;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+
+        return null;
+    }
+
     private String extraerPrimerValorNoVacio(JsonNode arrayNode, String campo, String valorPorDefecto) {
         if (arrayNode != null && arrayNode.isArray()) {
             for (JsonNode item : arrayNode) {
                 JsonNode valor = item.get(campo);
                 if (valor != null && !valor.asText().isBlank()) {
-                    return valor.asText();
-                }
-
-                if ("value".equals(campo)) {
-                    JsonNode alt = item.get("value");
-                    if (alt != null && !alt.asText().isBlank()) {
-                        return alt.asText() + "%";
+                    if ("value".equals(campo)) {
+                        return valor.asText() + "%";
                     }
+                    return valor.asText();
                 }
             }
         }

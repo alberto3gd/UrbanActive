@@ -37,13 +37,7 @@ public class ActividadContextService {
         }
 
         WeatherInfo weather = aemetService.getWeatherMadrid();
-
-        TrafficInfo traffic;
-        if (userPoint != null && puntoActividad != null) {
-            traffic = trafficService.calcularTraficoTrayecto(userPoint, puntoActividad);
-        } else {
-            traffic = trafficService.calcularNivelSimple(puntoActividad);
-        }
+        TrafficInfo traffic = trafficService.calcularNivelSimple(punto);
 
         return new ActividadContexto(puntoActividad, weather, traffic);
     }
