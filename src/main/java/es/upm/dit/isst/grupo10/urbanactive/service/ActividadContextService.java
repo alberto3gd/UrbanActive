@@ -45,15 +45,19 @@ public class ActividadContextService {
             traffic = new TrafficInfo(
                     "No disponible",
                     0,
-                    "Permite la ubicación para ver el tráfico del trayecto",
-                    0.0
+                    "Permite la ubicación para ver el trayecto estimado",
+                    0.0,
+                    "-",
+                    "-"
             );
         } else {
             traffic = new TrafficInfo(
                     "No disponible",
                     0,
                     "No se pudo obtener la ubicación de la actividad",
-                    0.0
+                    0.0,
+                    "-",
+                    "-"
             );
         }
 

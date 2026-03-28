@@ -3,201 +3,184 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="${actividad.tipo} + ' | UrbanActive'">Detalle actividad | UrbanActive</title>
+  <title th:text="${actividad.tipo} + ' | UrbanActive'">Detalle actividad</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/style-actividad-detallada.css}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+
 <body>
 
-  <nav class="top-nav">
-    <div class="container-fluid d-flex justify-content-between align-items-center px-4 py-3">
-      <div class="fw-bold fs-2">UrbanActive</div>
-      <div class="d-flex gap-4">
-        <a href="#" class="nav-link text-dark text-decoration-none">Mapa</a>
-        <a href="#" class="nav-link text-dark text-decoration-none">Seguidos</a>
-        <a href="#" class="nav-link active text-decoration-none">Actividades</a>
-        <a href="#" class="nav-link text-dark text-decoration-none">Crear</a>
-        <a href="#" class="nav-link text-dark text-decoration-none">Perfil</a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="page-container px-3">
-    <div class="activity-layout">
-
-      <section class="hero-card">
-        <div class="hero-image-wrapper">
-          <img th:src="${actividad.imagen}" src="/img/default.jpg" alt="Imagen de la actividad">
-          <a th:href="@{/actividades}" class="back-btn">
-            <i class="fa-solid fa-arrow-left"></i>
-          </a>
-        </div>
-
-        <div class="p-4">
-          <div class="small text-muted mb-2">
-            <span th:text="${actividad.tipo}">Tipo</span>
-            <span class="badge bg-success ms-2">Pública</span>
-          </div>
-
-          <h1 class="activity-title mb-2" th:text="${actividad.tipo}">
-            Nombre actividad
-          </h1>
-
-          <p class="activity-subtitle mb-4" th:text="${actividad.organizador}">
-            Organizador
-          </p>
-
-          <div th:if="${mensaje != null}" class="alert alert-info mb-4" th:text="${mensaje}">
-            Mensaje
-          </div>
-
-          <div class="info-grid mb-4">
-            <div class="info-mini">
-              <i class="fa-regular fa-calendar"></i>
-              <div>
-                <div class="fw-semibold">Fecha</div>
-                <div th:text="${actividad.fecha}">25 marzo 2026</div>
-              </div>
-            </div>
-
-            <div class="info-mini">
-              <i class="fa-regular fa-clock"></i>
-              <div>
-                <div class="fw-semibold">Hora</div>
-                <div th:text="${actividad.hora}">18:00</div>
-              </div>
-            </div>
-
-            <div class="info-mini">
-              <i class="fa-solid fa-users"></i>
-              <div>
-                <div class="fw-semibold">Participantes</div>
-                <div th:text="${actividad.plazasDisponibles} + ' / ' + ${actividad.plazasTotales}">10 / 10</div>
-              </div>
-            </div>
-
-            <div class="info-mini">
-              <i class="fa-regular fa-star"></i>
-              <div>
-                <div class="fw-semibold">Nivel</div>
-                <div th:text="${actividad.nivel.valor} + ' / 10'">8.0 / 10</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-custom">
-            <div class="fw-semibold mb-2">Ubicación</div>
-            <div th:text="${actividad.ubicacion}">Parque del Retiro</div>
-          </div>
-        </div>
-      </section>
-
-      <aside>
-
-        <div class="metrics-row">
-          <div class="card-metric weather-card">
-            <div class="fw-semibold mb-2">Clima</div>
-
-            <div th:if="${contexto != null and contexto.weather() != null}">
-              <div class="weather-info">
-                <div class="weather-main" th:text="${contexto.weather().estadoCielo()}">Soleado</div>
-                <div class="weather-temp" th:text="${contexto.weather().temperatura()}">24ºC</div>
-                <div class="weather-details">
-                  <small th:text="${contexto.weather().viento()}">10 km/h</small>
-                  <small th:if="${contexto.weather().probabilidadLluvia() != null}"
-                         th:text="' · ' + ${contexto.weather().probabilidadLluvia()}">
-                    · 0%
-                  </small>
-                </div>
-              </div>
-            </div>
-
-            <div th:if="${contexto == null or contexto.weather() == null}" class="text-muted small">
-              No hay datos meteorológicos disponibles
-            </div>
-          </div>
-
-          <div class="card-metric traffic-card">
-            <div class="fw-semibold mb-2">Tráfico</div>
-
-            <div th:if="${contexto != null and contexto.traffic() != null}">
-              <div class="traffic-info">
-                <div class="traffic-level"
-                     th:classappend="${contexto.traffic().nivel() == 'Bajo' ? 'traffic-low' :
-                                    (contexto.traffic().nivel() == 'Medio' ? 'traffic-medium' : 'traffic-high')}"
-                     th:text="${contexto.traffic().nivel()}">
-                  Medio
-                </div>
-
-                <div class="traffic-summary small mb-1"
-                     th:text="${contexto.traffic().resumen()}">
-                  Distancia aproximada: 4.2 km · 2 incidencias en el trayecto
-                </div>
-
-                <div class="small text-muted"
-                     th:text="${#numbers.formatDecimal(contexto.traffic().distanciaKm(), 1, 1)} + ' km'">
-                  4.2 km
-                </div>
-              </div>
-            </div>
-
-            <div th:if="${contexto == null or contexto.traffic() == null}" class="text-muted small">
-              No se pudo cargar información del tráfico
-            </div>
-          </div>
-        </div>
-
-        <div class="sidebar-card">
-          <div class="fw-semibold mb-2">Descripción</div>
-          <div th:text="${actividad.descripcion}">
-            Descripción de la actividad
-          </div>
-        </div>
-
-        <div class="sidebar-card d-flex justify-content-between align-items-center">
-          <div>
-            <div class="fw-semibold">Duración</div>
-            <div th:text="${actividad.duracion}">1h 30min</div>
-          </div>
-          <div class="text-end">
-            <div class="fw-semibold">Precio</div>
-            <div th:text="${actividad.precio == 0.0 ? 'Gratis' : actividad.precio + ' €'}">10 €</div>
-          </div>
-        </div>
-
-        <form th:action="@{/actividades/{id}/reservar(id=${actividad.id})}" method="post">
-          <input type="hidden" name="userLat" th:value="${userPoint != null ? userPoint.lat() : ''}">
-          <input type="hidden" name="userLon" th:value="${userPoint != null ? userPoint.lon() : ''}">
-          <button type="submit" class="reserve-btn">Reservar plaza</button>
-        </form>
-
-      </aside>
-
-    </div>
+<nav class="top-nav">
+  <div class="container-fluid d-flex justify-content-between align-items-center px-4 py-3">
+    <div class="fw-bold fs-2">UrbanActive</div>
   </div>
+</nav>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const url = new URL(window.location.href);
+<div class="page-container px-3">
+  <div class="activity-layout">
 
-      if (!url.searchParams.has("userLat") || !url.searchParams.has("userLon")) {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            function(position) {
-              url.searchParams.set("userLat", position.coords.latitude);
-              url.searchParams.set("userLon", position.coords.longitude);
-              window.location.replace(url.toString());
-            },
-            function() {
-              console.log("No se pudo obtener la ubicación del usuario");
-            }
-          );
+    <!-- IZQUIERDA -->
+    <section class="hero-card">
+      <div class="hero-image-wrapper">
+        <img th:src="${actividad.imagen}" src="/img/default.jpg">
+        <a th:href="@{/actividades}" class="back-btn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
+      </div>
+
+      <div class="p-4">
+
+        <div class="small text-muted mb-2">
+          <span th:text="${actividad.tipo}">Tipo</span>
+          <span class="badge bg-success ms-2">Pública</span>
+        </div>
+
+        <h1 class="activity-title mb-2" th:text="${actividad.tipo}">Actividad</h1>
+
+        <p class="activity-subtitle mb-4" th:text="${actividad.organizador}">Organizador</p>
+
+        <div class="info-grid mb-4">
+
+          <div class="info-mini">
+            <i class="fa-regular fa-calendar"></i>
+            <div>
+              <div class="fw-semibold">Fecha</div>
+              <div th:text="${actividad.fecha}"></div>
+            </div>
+          </div>
+
+          <div class="info-mini">
+            <i class="fa-regular fa-clock"></i>
+            <div>
+              <div class="fw-semibold">Hora</div>
+              <div th:text="${actividad.hora}"></div>
+            </div>
+          </div>
+
+          <div class="info-mini">
+            <i class="fa-solid fa-users"></i>
+            <div>
+              <div class="fw-semibold">Participantes</div>
+              <div th:text="${actividad.plazasDisponibles} + ' / ' + ${actividad.plazasTotales}"></div>
+            </div>
+          </div>
+
+          <div class="info-mini">
+            <i class="fa-regular fa-star"></i>
+            <div>
+              <div class="fw-semibold">Nivel</div>
+              <div th:text="${actividad.nivel.valor}"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="card-custom">
+          <div class="fw-semibold mb-2">Ubicación</div>
+          <div th:text="${actividad.ubicacion}"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- DERECHA -->
+    <aside>
+
+      <div class="metrics-row">
+
+        <!-- CLIMA -->
+        <div class="card-metric weather-card">
+          <div class="fw-semibold mb-2">Clima</div>
+
+          <div th:if="${contexto != null and contexto.weather != null}">
+            <div class="weather-main" th:text="${contexto.weather.estadoCielo}"></div>
+            <div class="weather-temp" th:text="${contexto.weather.temperatura}"></div>
+            <div class="small text-muted">
+              <span th:text="${contexto.weather.viento}"></span>
+              <span th:if="${contexto.weather.probabilidadLluvia != null}"
+                    th:text="' · ' + ${contexto.weather.probabilidadLluvia}"></span>
+            </div>
+          </div>
+
+          <div th:if="${contexto == null or contexto.weather == null}" class="text-muted small">
+            No hay datos meteorológicos
+          </div>
+        </div>
+
+        <!-- TRAYECTO -->
+        <div class="card-metric traffic-card">
+          <div class="fw-semibold mb-2">Trayecto</div>
+
+          <div th:if="${contexto != null and contexto.traffic() != null}">
+
+            <div class="traffic-level"
+                 th:classappend="${contexto.traffic().nivel() == 'Bajo' ? 'traffic-low' :
+                                (contexto.traffic().nivel() == 'Medio' ? 'traffic-medium' : 'traffic-high')}"
+                 th:text="${contexto.traffic().nivel()}">
+            </div>
+
+            <div class="small mb-1"
+                 th:text="${contexto.traffic().resumen()}">
+            </div>
+
+          </div>
+
+          <div th:if="${contexto == null or contexto.traffic() == null}" class="text-muted small">
+            No se pudo calcular el trayecto
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DESCRIPCIÓN -->
+      <div class="sidebar-card">
+        <div class="fw-semibold mb-2">Descripción</div>
+        <div th:text="${actividad.descripcion}"></div>
+      </div>
+
+      <!-- EXTRA -->
+      <div class="sidebar-card d-flex justify-content-between">
+        <div>
+          <div class="fw-semibold">Duración</div>
+          <div th:text="${actividad.duracion}"></div>
+        </div>
+
+        <div class="text-end">
+          <div class="fw-semibold">Precio</div>
+          <div th:text="${actividad.precio} + ' €'"></div>
+        </div>
+      </div>
+
+      <!-- BOTÓN -->
+      <form th:action="@{/reservas/actividad/{id}(id=${actividad.id})}" method="get">
+        <button type="submit" class="reserve-btn">Reservar plaza</button>
+      </form>
+
+    </aside>
+
+  </div>
+</div>
+
+<!-- GEOLOCALIZACIÓN -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const url = new URL(window.location.href);
+
+  if (!url.searchParams.has("userLat") || !url.searchParams.has("userLon")) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          url.searchParams.set("userLat", position.coords.latitude);
+          url.searchParams.set("userLon", position.coords.longitude);
+          window.location.replace(url.toString());
         }
-      }
-    });
-  </script>
+      );
+    }
+  }
+});
+</script>
 
 </body>
 </html>

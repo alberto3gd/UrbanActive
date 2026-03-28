@@ -4,137 +4,160 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.upm.dit.isst.grupo10.urbanactive.dto.GeoPoint;
 import es.upm.dit.isst.grupo10.urbanactive.dto.TrafficInfo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class TrafficService {
 
+    @Value("${openrouteservice.api-key:}")
+    private String apiKey;
+
     private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public TrafficService() {
-        this.restClient = RestClient.create();
+    public TrafficService(RestClient.Builder builder) {
+        this.restClient = builder
+                .baseUrl("https://api.openrouteservice.org")
+                .defaultHeader("Content-Type", "application/json")
+                .defaultHeader("Accept", "application/json")
+                .defaultHeader("User-Agent", "UrbanActive/1.0 (urbanactive@upm.es)")
+                .build();
     }
 
     public TrafficInfo calcularNivelSimple(GeoPoint punto) {
         if (punto == null) {
-            return new TrafficInfo("No disponible", 0, "Sin ubicación", 0.0);
+            return new TrafficInfo("No disponible", 0, "Sin ubicación", 0.0, "-", "-");
         }
 
-        try {
-            String url = "https://datos.madrid.es/egob/catalogo/202716-0-incidencias-trafico.json";
-
-            String json = restClient.get()
-                    .uri(url)
-                    .retrieve()
-                    .body(String.class);
-
-            JsonNode root = objectMapper.readTree(json);
-            JsonNode incidencias = root.path("@graph");
-
-            int cercanas = 0;
-
-            for (JsonNode inc : incidencias) {
-                double lat = inc.path("location").path("latitude").asDouble();
-                double lon = inc.path("location").path("longitude").asDouble();
-
-                double distancia = distanciaKm(
-                        punto.lat(), punto.lon(),
-                        lat, lon
-                );
-
-                if (distancia < 2) {
-                    cercanas++;
-                }
-            }
-
-            String nivel;
-            if (cercanas == 0) nivel = "Bajo";
-            else if (cercanas == 1) nivel = "Medio";
-            else nivel = "Alto";
-
-            return new TrafficInfo(
-                    nivel,
-                    cercanas,
-                    cercanas + " incidencias cercanas",
-                    0.0
-            );
-
-        } catch (Exception e) {
-            return new TrafficInfo("No disponible", 0, "Error obteniendo tráfico", 0.0);
-        }
+        return new TrafficInfo(
+                "No disponible",
+                0,
+                "Usa el trayecto desde tu ubicación para calcular la ruta",
+                0.0,
+                "-",
+                "-"
+        );
     }
 
     public TrafficInfo calcularTraficoTrayecto(GeoPoint origen, GeoPoint destino) {
         if (origen == null || destino == null) {
-            return new TrafficInfo("No disponible", 0, "Faltan ubicaciones", 0.0);
+            return new TrafficInfo(
+                    "No disponible",
+                    0,
+                    "Faltan ubicaciones",
+                    0.0,
+                    "-",
+                    "-"
+            );
+        }
+
+        if (apiKey == null || apiKey.isBlank()) {
+            return new TrafficInfo(
+                    "No disponible",
+                    0,
+                    "API de OpenRouteService no configurada",
+                    0.0,
+                    "-",
+                    "-"
+            );
         }
 
         try {
-            String url = "https://datos.madrid.es/egob/catalogo/202716-0-incidencias-trafico.json";
+            String body = """
+                    {
+                      "coordinates": [
+                        [%s, %s],
+                        [%s, %s]
+                      ]
+                    }
+                    """.formatted(
+                    origen.lon(), origen.lat(),
+                    destino.lon(), destino.lat()
+            );
 
-            String json = restClient.get()
-                    .uri(url)
+            String response = restClient.post()
+                    .uri("/v2/directions/driving-car")
+                    .header("Authorization", apiKey)
+                    .body(body)
                     .retrieve()
                     .body(String.class);
 
-            JsonNode root = objectMapper.readTree(json);
-            JsonNode incidencias = root.path("@graph");
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode routes = root.path("routes");
 
-            int incidenciasTrayecto = 0;
-
-            for (JsonNode inc : incidencias) {
-                double lat = inc.path("location").path("latitude").asDouble();
-                double lon = inc.path("location").path("longitude").asDouble();
-
-                if (estaCercaDelTrayecto(origen, destino, lat, lon, 1.0)) {
-                    incidenciasTrayecto++;
-                }
+            if (!routes.isArray() || routes.isEmpty()) {
+                return new TrafficInfo(
+                        "No disponible",
+                        0,
+                        "No se encontró una ruta",
+                        0.0,
+                        "-",
+                        "-"
+                );
             }
 
-            double distancia = distanciaKm(origen.lat(), origen.lon(), destino.lat(), destino.lon());
+            JsonNode summary = routes.get(0).path("summary");
 
-            String nivel;
-            if (incidenciasTrayecto == 0) nivel = "Bajo";
-            else if (incidenciasTrayecto <= 2) nivel = "Medio";
-            else nivel = "Alto";
+            double distanciaMetros = summary.path("distance").asDouble(0.0);
+            double duracionSegundos = summary.path("duration").asDouble(0.0);
 
+            double distanciaKm = distanciaMetros / 1000.0;
+            long segundos = Math.round(duracionSegundos);
+
+            String nivel = calcularNivel(distanciaKm, segundos);
+
+            String duracionTexto = formatearSegundos(segundos);
             String resumen = String.format(
-                    "Distancia aproximada: %.1f km · %d incidencias en el trayecto",
-                    distancia,
-                    incidenciasTrayecto
+                    "Distancia aproximada: %.1f km · %s estimados",
+                    distanciaKm,
+                    duracionTexto
             );
 
-            return new TrafficInfo(nivel, incidenciasTrayecto, resumen, distancia);
+            return new TrafficInfo(
+                    nivel,
+                    0,
+                    resumen,
+                    distanciaKm,
+                    duracionTexto,
+                    "-"
+            );
 
         } catch (Exception e) {
-            return new TrafficInfo("No disponible", 0, "Error obteniendo tráfico", 0.0);
+            e.printStackTrace();
+            return new TrafficInfo(
+                    "No disponible",
+                    0,
+                    "Servicio de ruta no accesible",
+                    0.0,
+                    "-",
+                    "-"
+            );
         }
     }
 
-    private double distanciaKm(double lat1, double lon1, double lat2, double lon2) {
-        double R = 6371;
+    private String calcularNivel(double distanciaKm, long duracionSegundos) {
+        if (distanciaKm <= 0 || duracionSegundos <= 0) {
+            return "No disponible";
+        }
 
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
+        double minutos = duracionSegundos / 60.0;
+        double minPorKm = minutos / distanciaKm;
 
-        double a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) *
-                Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-        return 2 * R * Math.asin(Math.sqrt(a));
+        if (minPorKm < 2.5) return "Bajo";
+        if (minPorKm < 4.0) return "Medio";
+        return "Alto";
     }
 
-    private boolean estaCercaDelTrayecto(GeoPoint origen, GeoPoint destino,
-                                         double latInc, double lonInc,
-                                         double umbralKm) {
-        double d1 = distanciaKm(origen.lat(), origen.lon(), latInc, lonInc);
-        double d2 = distanciaKm(destino.lat(), destino.lon(), latInc, lonInc);
-        double trayecto = distanciaKm(origen.lat(), origen.lon(), destino.lat(), destino.lon());
+    private String formatearSegundos(long segundos) {
+        long minutos = segundos / 60;
+        long horas = minutos / 60;
+        minutos = minutos % 60;
 
-        return (d1 + d2) <= (trayecto + umbralKm);
+        if (horas > 0) {
+            return horas + " h " + minutos + " min";
+        }
+        return minutos + " min";
     }
 }

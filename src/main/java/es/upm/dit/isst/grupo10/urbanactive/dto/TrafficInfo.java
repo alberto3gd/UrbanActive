@@ -4,5 +4,7 @@ public record TrafficInfo(
         String nivel,
         int incidenciasCercanas,
         String resumen,
-        double distanciaKm
+        double distanciaKm,
+        String duracionConTrafico,
+        String duracionSinTrafico
 ) {}
