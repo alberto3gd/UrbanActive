@@ -1,21 +1,194 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Actividades</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa | UrbanActive</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/style-actividades.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
+
 <body>
 
-<h1>Listado de actividades</h1>
+<nav class="top-nav">
+  <div class="container-fluid d-flex justify-content-between align-items-center px-4 py-3">
+    <div class="fw-bold fs-2">UrbanActive</div>
+  </div>
+</nav>
 
-<ul>
-    <li th:each="actividad : ${actividades}">
-        <span th:text="${actividad.titulo}">Título</span> -
-        <span th:text="${actividad.descripcion}">Descripción</span> 
-        <small class="text-muted">(<span th:text="${actividad.tipo}">Tipo</span>)</small>
-        <a th:href="@{/actividades/{id}(id=${actividad.id})}">Seleccionar</a>
-    </li>
-</ul>
+<div class="page-container px-3">
+  <div class="activity-layout">
+
+    <!-- IZQUIERDA: MAPA -->
+    <section class="hero-card map-panel">
+      <div class="map-header">
+        <div>
+          <div class="small text-muted mb-1">Explora</div>
+          <h1 class="map-title mb-0">Actividades en el mapa</h1>
+        </div>
+      </div>
+
+      <div class="search-box-wrapper">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="Buscar actividades...">
+        </div>
+      </div>
+
+      <div id="map"></div>
+    </section>
+
+    <!-- DERECHA: LISTADO -->
+    <aside>
+      <div class="sidebar-card">
+        <div class="fw-semibold mb-2">
+            <span id="activityCount" th:text="${#lists.size(actividades)} + ' actividades disponibles'">
+                0 Actividades disponibles
+            </span>
+        </div>
+
+        <div class="activities-list" id="activityList">
+          <a class="activity-item-card"
+             th:each="actividad : ${actividades}"
+             th:href="@{/actividades/{id}(id=${actividad.id})}"
+             th:attr="data-id=${actividad.id},
+                      data-title=${actividad.titulo},
+                      data-description=${actividad.descripcion},
+                      data-type=${actividad.tipo},
+                      data-location=${actividad.ubicacion},
+                      data-lat=${actividad.latitud},
+                      data-lon=${actividad.longitud}">
+
+            <div class="activity-item-main">
+              <div class="activity-item-title" th:text="${actividad.titulo}">Running Matinal en Retiro</div>
+
+              <div class="activity-item-meta">
+                <span th:text="${actividad.tipo}">Running</span>
+                <span> · </span>
+                <span th:text="${actividad.nivel}">Intermedio</span>
+              </div>
+
+              <div class="activity-item-date">
+                <i class="fa-regular fa-calendar"></i>
+                <span th:text="${actividad.fecha}">2026-03-01</span>
+                <span> · </span>
+                <i class="fa-regular fa-clock"></i>
+                <span th:text="${actividad.hora}">08:00</span>
+              </div>
+
+              <div class="activity-item-location">
+                <i class="fa-solid fa-location-dot"></i>
+                <span th:text="${actividad.ubicacion}">Parque del Retiro</span>
+              </div>
+            </div>
+
+            <div class="activity-item-side">
+              <div class="price-tag" th:text="${actividad.precioTexto}">Gratis</div>
+              <div class="participants"
+                   th:text="${actividad.plazasDisponibles} + '/' + ${actividad.plazasTotales}">
+                8/15
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const map = L.map('map').setView([40.4168, -3.7038], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  const items = Array.from(document.querySelectorAll('.activity-item-card'));
+  const searchInput = document.getElementById('searchInput');
+  const activityCount = document.getElementById('activityCount');
+
+  const markers = [];
+  const bounds = [];
+
+  items.forEach(item => {
+    const lat = parseFloat(item.dataset.lat);
+    const lon = parseFloat(item.dataset.lon);
+    const title = item.dataset.title;
+    const type = item.dataset.type;
+    const location = item.dataset.location;
+    const href = item.getAttribute('href');
+
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const marker = L.marker([lat, lon]).addTo(map);
+
+      marker.bindPopup(`
+        <div class="popup-title">${title}</div>
+        <div class="popup-meta">${type} · ${location}</div>
+        <a class="popup-link" href="${href}">Ver actividad</a>
+      `);
+
+      marker._actividadId = item.dataset.id;
+      markers.push(marker);
+      bounds.push([lat, lon]);
+
+      item.addEventListener('mouseenter', function () {
+        marker.openPopup();
+      });
+    }
+  });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+
+  function normalize(text) {
+    return (text || '').toLowerCase();
+  }
+
+  function filterActivities() {
+    const query = normalize(searchInput.value);
+    let visibles = 0;
+    const visibleBounds = [];
+
+    items.forEach(item => {
+      const text =
+        normalize(item.dataset.title) + ' ' +
+        normalize(item.dataset.description) + ' ' +
+        normalize(item.dataset.type) + ' ' +
+        normalize(item.dataset.location);
+
+      const visible = text.includes(query);
+      item.style.display = visible ? 'flex' : 'none';
+
+      const marker = markers.find(m => m._actividadId === item.dataset.id);
+      if (marker) {
+        if (visible) {
+          marker.addTo(map);
+          visibleBounds.push(marker.getLatLng());
+        } else {
+          map.removeLayer(marker);
+        }
+      }
+
+      if (visible) visibles++;
+    });
+
+    activityCount.textContent = visibles;
+
+    if (visibleBounds.length > 0) {
+      map.fitBounds(visibleBounds, { padding: [40, 40] });
+    }
+  }
+
+  searchInput.addEventListener('input', filterActivities);
+});
+</script>
 
 </body>
 </html>
